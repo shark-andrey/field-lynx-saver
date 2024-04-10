@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-PROJECT_NAME := finish-lynx-saver
+PROJECT_NAME := finish-lynx-my
 IMAGE_NAME := $(PROJECT_NAME):latest
 
 all:

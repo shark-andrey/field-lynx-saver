@@ -5,7 +5,7 @@ create table if not exists TABLE_NAME (
     place varchar(255),
     athlete_id int not null,
     lane int,
-    time varchar(255),
+    timing varchar(255),
     react_time decimal(7, 2),
     wind varchar(255),
     photo_file_name varchar(255),

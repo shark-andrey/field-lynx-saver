@@ -18,7 +18,7 @@ class Record(typing.NamedTuple):
     place: int | None
     athlete_id: int
     lane: int | None
-    time: Decimal | None
+    time: str | None
     react_time: Decimal | None
     wind: str | None
     photo_file_name: str | None = None
@@ -45,29 +45,16 @@ class Record(typing.NamedTuple):
             int(fields[0]),
             int(fields[1]),
             int(fields[2]),
-            int(fields[3]) if fields[3] else None,
+            fields[3]) if fields[3] else None,
             int(fields[4]),
-            int(fields[5]) if fields[5] else None,
-            _parse_time(fields[6]) if fields[6] else None,
-            _parse_time(fields[7]) if fields[7] else None,
+            fields[5]) if fields[5] else None,
+            fields[6] if fields[6] else None,
+            fields[7] if fields[7] else None,
             fields[8] if fields[8] else None,
             fields[9] if fields[9] else None,
             int(fields[10]),
         )
         
-def _parse_time(s):
-    parts = s.split(":")
-    if len(parts) == 1:
-        return Decimal(parts[0])
-    elif len(parts) == 2:
-        return Decimal(int(parts[0]) * 60) + Decimal(parts[1])
-    elif len(parts) == 3:
-        return Decimal(int(parts[0]) * 3600) + Decimal(int(parts[1]) * 60) + Decimal(parts[2])
-    else:
-        raise ValueError(f"Invalid time format: {s}")
-
-
-
 async def upsert_records(records: list[Record]):
     q = sa.text(UPSERT_QUERY)
     data = [r._asdict() for r in records]

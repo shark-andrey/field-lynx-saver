@@ -9,5 +9,6 @@ create table if not exists TABLE_NAME (
     react_time decimal(7, 2),
     wind varchar(255),
     photo_file_name varchar(255),
+    competition_id int not null,
     primary key (event_number, round_number, heat_number, athlete_id)
 );

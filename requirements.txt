@@ -1,0 +1,4 @@
+SQLAlchemy[asyncio]==2.0.27
+asyncmy==0.2.9
+#PyMySQL==1.1.0
+loguru==0.7.2

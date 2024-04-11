@@ -10,5 +10,5 @@ create table if not exists TABLE_NAME (
     wind varchar(255),
     photo_file_name varchar(255),
     competition_id int not null,
-    primary key (event_number, round_number, heat_number, athlete_id)
+    primary key (event_number, round_number, heat_number, athlete_id, competition_id)
 );

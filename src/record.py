@@ -46,7 +46,7 @@ class Record(typing.NamedTuple):
             int(fields[3]),
             int(fields[4]),
             int(fields[5]),
-            int(fields[6]),
+            fields[6] if fields[6] else None,
             fields[7] if fields[7] else None,
 			fields[8] if fields[8] else None,
         )

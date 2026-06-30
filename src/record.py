@@ -18,7 +18,7 @@ class Record(typing.NamedTuple):
     place: int
     attempt: int
     athlete_id: int
-    mark: Decimal | None
+    mark: Decimal
     wind: str | None
     photo: str | None = None
     @classmethod

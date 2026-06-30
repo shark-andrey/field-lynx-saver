@@ -45,7 +45,7 @@ class Record(typing.NamedTuple):
             place=safe_int(fields[3]),
             attempt=safe_int(fields[4]),
             athlete_id=safe_int(fields[5]),
-            mark=Decimal(fields[6]) if fields[6] else None,
+            mark=Decimal(fields[6]) if fields[6],
             wind=fields[7] if fields[7] else None,
             photo=fields[8] if len(fields) > 8 and fields[8] else None,
         )

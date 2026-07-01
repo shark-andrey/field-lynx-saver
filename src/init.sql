@@ -1,4 +1,4 @@
-create table if not exists TABLE_NAME (
+CREATE TABLE IF NOT EXISTS field_lynx (
     event_number int not null,
     round_number int not null,
     flight_number int not null,

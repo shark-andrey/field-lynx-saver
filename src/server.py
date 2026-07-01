@@ -1,80 +1,48 @@
-# src/server.py
 import asyncio
-import time
-from sqlalchemy import text
+import traceback
 
-from .record import upsert_records
+from .record import Record, upsert_records
 from .logger import logger
 from . import config
-from .db import async_engine  # убери импорт init_db — он больше не нужен
+from .db import init_db
 
 
 async def main():
-    # --- НАЧАЛО: Проверка подключения к БД ---
-    logger.info("Starting DB health check...")
-    t0 = time.perf_counter()
-    try:
-        async with async_engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
-        t1 = time.perf_counter()
-        logger.info(f"DB health check OK, took {t1 - t0:.3f}s")
-    except Exception as e:
-        logger.exception("DB health check failed")
-        raise e
-    # --- КОНЕЦ: Проверка подключения к БД ---
-
+    await init_db()
     server = await asyncio.start_server(
         client_connected_cb=on_accept,
         host="0.0.0.0",
         port=config.port,
         reuse_address=True,
     )
-    logger.info(f"Server started on port {config.port}")
-    
     async with server:
         await server.serve_forever()
 
 
 async def on_accept(reader, writer):
-    addr = writer.get_extra_info("peername")
-    logger.debug(f"Got connection from {addr}")
-
+    logger.debug("Got connection")
     while True:
-        try:
-            message_bytes = await reader.readline()
-        except Exception as e:
-            logger.warning(f"Read error from {addr}: {e}")
+        message = await reader.readline()
+        if message == b"":
             break
-
-        if message_bytes == b"":
-            logger.debug(f"Connection closed by {addr}")
-            break
-
-        message = None
         try:
-            message = message_bytes.decode("utf-8").strip()
-        except UnicodeDecodeError as e:
-            logger.error(f"Unicode decode error from {addr}: {e}, raw={message_bytes!r}")
+            message = message.decode().strip()
+        except UnicodeDecodeError:
+            logger.error("Error decoding message: {message}")
             continue
-
-        if not message:
-            continue
-
-        logger.debug(f"Message: {message}")
-        try:
-            await handle_message(message)
-        except Exception as e:
-            logger.exception("Error handling message", exc_info=e)
+        if len(message) > 0:
+            logger.debug(f"Message: {message}")
+            try:
+                await handle_message(message)
+            except Exception as e:
+                logger.exception(e)
 
 
 async def handle_message(message: str):
-    from .record import Record
     records: list[Record] = Record.parse(message)
-    if not records:
-        return
-
-    logger.debug(f"Upserting {len(records)} records")
-    await upsert_records(records)
+    if len(records) > 0:
+        logger.debug(f"Upserting {len(records)} records")
+        await upsert_records(records)
 
 
 if __name__ == "__main__":

@@ -59,9 +59,9 @@ class Record(typing.NamedTuple):
             athlete_id=int(fields[5]),
             mark=to_decimal_or_none(fields[6]),
             wind=fields[7] or None,
-            photo=fields[8] if len(fields) > 8 else None,
+            photo_file_name=fields[8] if len(fields) > 8 else None,
         )
-        
+       
 
 async def upsert_records(records: list[Record]):
     q = sa.text(UPSERT_QUERY)

@@ -21,6 +21,7 @@ class Record(typing.NamedTuple):
     mark: Decimal
     wind: str | None
     photo: str | None = None
+    
     @classmethod
     def parse(cls, text: str) -> list[Record]:
         str_records = text.split(";")
@@ -37,28 +38,28 @@ class Record(typing.NamedTuple):
 
     @classmethod
     def _parse_record(cls, text: str) -> Record:
-    fields = [f.strip() for f in text.split(",")]
-    if len(fields) < 8:
-        raise ValueError(f"Not enough fields in record: {text!r}")
+        fields = [f.strip() for f in text.split(",")]
+        if len(fields) < 8:
+            raise ValueError(f"Not enough fields in record: {text!r}")
 
-    def to_decimal_or_none(value: str | None) -> Decimal | None:
-        if not value:
-            return None
-        try:
-            return Decimal(value)
-        except InvalidOperation:
-            raise ValueError(f"Invalid decimal value: {value!r}")
+        def to_decimal_or_none(value: str | None) -> Decimal | None:
+            if not value:
+                return None
+            try:
+                return Decimal(value)
+            except InvalidOperation:
+                raise ValueError(f"Invalid decimal value: {value!r}")
 
-    return cls(
-        event_number=int(fields[0]),
-        round_number=int(fields[1]),
-        flight_number=int(fields[2]),
-        place=int(fields[3]),
-        attempt=int(fields[4]),
-        athlete_id=int(fields[5]),
-        mark=to_decimal_or_none(fields[6]),
-        wind=fields[7] or None,
-        photo_file_name=fields[8] if len(fields) > 8 else None,
+        return cls(
+            event_number=int(fields[0]),
+            round_number=int(fields[1]),
+            flight_number=int(fields[2]),
+            place=int(fields[3]),
+            attempt=int(fields[4]),
+            athlete_id=int(fields[5]),
+            mark=to_decimal_or_none(fields[6]),
+            wind=fields[7] or None,
+            photo=fields[8] if len(fields) > 8 else None,
         )
         
 

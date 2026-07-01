@@ -1,6 +1,5 @@
 import os
 
-port = os.getenv("PORT", 9090)
-db_url = os.getenv("DB_URL", "mysql+asyncmy://root:password@localhost:3306/dev")
-# db_url = os.getenv("DB_URL", "mysql+pymysql://root:password@localhost:3306/dev")
+port = int(os.getenv("PORT", "9090"))
+db_url = os.getenv("DB_URL")  # без fallback-значения с localhost!
 table_name = "field_lynx"

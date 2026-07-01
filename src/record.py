@@ -51,15 +51,15 @@ class Record(typing.NamedTuple):
                 raise ValueError(f"Invalid decimal value: {value!r}")
 
         return cls(
-            event_number=int(fields[0]),
-            round_number=int(fields[1]),
-            flight_number=int(fields[2]),
-            place=int(fields[3]),
-            attempt=int(fields[4]),
-            athlete_id=int(fields[5]),
-            mark=to_decimal_or_none(fields[6]),
-            wind=fields[7] or None,
-            photo_file_name=fields[8] if len(fields) > 8 else None,
+            int(fields[0]),
+            int(fields[1]),
+            int(fields[2]),
+            int(fields[3]),
+            int(fields[4]),
+            int(fields[5]),
+            to_decimal_or_none(fields[6]),
+            fields[7] or None,
+            fields[8] if len(fields) > 8 else None,
         )
        
 

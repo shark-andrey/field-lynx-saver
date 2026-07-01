@@ -4,8 +4,11 @@ import traceback
 from .record import Record, upsert_records
 from .logger import logger
 from . import config
+from .db import init_db
+
 
 async def main():
+    await init_db()
     server = await asyncio.start_server(
         client_connected_cb=on_accept,
         host="0.0.0.0",
@@ -14,6 +17,7 @@ async def main():
     )
     async with server:
         await server.serve_forever()
+
 
 async def on_accept(reader, writer):
     logger.debug("Got connection")

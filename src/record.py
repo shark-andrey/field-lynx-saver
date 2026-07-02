@@ -1,15 +1,12 @@
 from __future__ import annotations
-
 import sqlalchemy as sa
+from sqlalchemy import text
 import typing
-
 from sqlalchemy.dialects.mysql import insert
 from decimal import Decimal
-
 from .db import AsyncDbSession
 from .logger import logger
 from . import config
-
 
 class Record(typing.NamedTuple):
     event_number: int
@@ -67,15 +64,32 @@ async def upsert_records(records: list[Record]):
     if not records:
         return
 
-    q = sa.text(UPSERT_QUERY)
+    q = text(UPSERT_QUERY)  # Используем text() вместо sa.text() для чистоты, хотя это одно и то же
     data = [r._asdict() for r in records]
+    
+    logger.debug(f"Preparing to upsert {len(records)} records")
 
     async with AsyncDbSession() as session:
-        # begin() гарантирует commit при успехе и rollback при ошибке
-        async with session.begin():
+        # 1. Явно начинаем транзакцию
+        await session.begin()
+        
+        try:
+            # 2. Получаем низкоуровневое соединение
             conn = await session.connection()
-            # Важно: передаём список словарей напрямую — asyncmy умеет executemany
+            
+            # 3. Выполняем запрос напрямую через соединение.
+            # asyncmy корректно обработает список словарей как executemany
             await conn.execute(q, data)
+            
+            # 4. Явно фиксируем транзакцию (это критически важно!)
+            await session.commit()
+            logger.info(f"Successfully upserted {len(records)} records.")
+            
+        except Exception as e:
+            # 5. При ошибке отменяем всё
+            await session.rollback()
+            logger.error(f"Failed to upsert records: {e}", exc_info=True)
+            raise
 
 
 UPSERT_QUERY = f"""

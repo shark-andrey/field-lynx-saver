@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS field_lynx (
     event_number int not null,
     round_number int not null,
-    flight_number int,
+    flight_number int not null,
     place int,
 	attempt int,
     athlete_id int not null,

@@ -85,12 +85,16 @@ async def upsert_records(records: list[Record]):
             await session.commit()
             logger.info(f"Successfully upserted {len(records)} records.")
             
-        except Exception as e:
-            # 5. При ошибке отменяем всё
+        except DBAPIError as e:
+            # ЛОВИМ ОШИБКУ ДРАЙВЕРА (MySQL error)
             await session.rollback()
-            logger.error(f"Failed to upsert records: {e}", exc_info=True)
+            logger.error(f"MySQL Error during upsert: {e.orig}") # e.orig содержит чистую ошибку MySQL
+            logger.error(f"Query details: {q.text}")
             raise
-
+        except Exception as e:
+            await session.rollback()
+            logger.exception(f"Unexpected error during upsert")
+            raise
 
 UPSERT_QUERY = f"""
 replace into {config.table_name} (event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo)

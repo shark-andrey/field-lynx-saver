@@ -1,9 +1,9 @@
 from __future__ import annotations
 import sqlalchemy as sa
-from sqlalchemy import text
 import typing
 from sqlalchemy.dialects.mysql import insert
 from decimal import Decimal
+
 from .db import AsyncDbSession
 from .logger import logger
 from . import config
@@ -64,37 +64,16 @@ async def upsert_records(records: list[Record]):
     if not records:
         return
 
-    q = text(UPSERT_QUERY)  # Используем text() вместо sa.text() для чистоты, хотя это одно и то же
+    q = sa.text(UPSERT_QUERY)
     data = [r._asdict() for r in records]
-    
-    logger.debug(f"Preparing to upsert {len(records)} records")
 
     async with AsyncDbSession() as session:
-        # 1. Явно начинаем транзакцию
-        await session.begin()
-        
-        try:
-            # 2. Получаем низкоуровневое соединение
+        # begin() гарантирует commit при успехе и rollback при ошибке
+        async with session.begin():
             conn = await session.connection()
-            
-            # 3. Выполняем запрос напрямую через соединение.
-            # asyncmy корректно обработает список словарей как executemany
+            # Важно: передаём список словарей напрямую — asyncmy умеет executemany
             await conn.execute(q, data)
-            
-            # 4. Явно фиксируем транзакцию (это критически важно!)
-            await session.commit()
-            logger.info(f"Successfully upserted {len(records)} records.")
-            
-        except DBAPIError as e:
-            # ЛОВИМ ОШИБКУ ДРАЙВЕРА (MySQL error)
-            await session.rollback()
-            logger.error(f"MySQL Error during upsert: {e.orig}") # e.orig содержит чистую ошибку MySQL
-            logger.error(f"Query details: {q.text}")
-            raise
-        except Exception as e:
-            await session.rollback()
-            logger.exception(f"Unexpected error during upsert")
-            raise
+
 
 UPSERT_QUERY = f"""
 replace into {config.table_name} (event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo)

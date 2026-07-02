@@ -97,14 +97,6 @@ async def upsert_records(records: list[Record]):
             raise
 
 UPSERT_QUERY = f"""
-INSERT INTO {config.table_name} (
-    event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo
-) VALUES (
-    :event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo
-)
-ON DUPLICATE KEY UPDATE
-    place = VALUES(place),
-    mark = VALUES(mark),
-    wind = VALUES(wind),
-    photo = VALUES(photo)
+replace into {config.table_name} (event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo)
+values (:event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo)
 """

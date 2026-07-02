@@ -64,11 +64,18 @@ class Record(typing.NamedTuple):
        
 
 async def upsert_records(records: list[Record]):
+    if not records:
+        return
+
     q = sa.text(UPSERT_QUERY)
     data = [r._asdict() for r in records]
+
     async with AsyncDbSession() as session:
-        await session.execute(q, data)
-        await session.commit()
+        # begin() гарантирует commit при успехе и rollback при ошибке
+        async with session.begin():
+            conn = await session.connection()
+            # Важно: передаём список словарей напрямую — asyncmy умеет executemany
+            await conn.execute(q, data)
 
 
 UPSERT_QUERY = f"""

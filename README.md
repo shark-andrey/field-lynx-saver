@@ -1,40 +1,77 @@
 # Saving FinishLynx Data
 
+Сервис — асинхронный TCP-сервер (`src/server.py`): принимает построчные
+сообщения с результатами полевых видов, парсит их (`src/record.py`) и делает
+`replace into` в таблицу `field_lynx` в MySQL. Схема таблицы создаётся при
+старте из `src/init.sql`.
+
+
+## Конфигурация
+
+Все секреты вынесены в файл `.env` (в git **не** коммитится, см. `.gitignore`).
+Шаблон с описанием переменных — `.env.example`.
+
+Переменные окружения (читаются в `src/config.py`):
+
+| Переменная | Где задаётся | Формат / значение | Зачем нужна |
+|------------|--------------|-------------------|-------------|
+| `DB_URL` | `.env` | `mysql+asyncmy://{db_user}:{db_password}@{db_host}:{db_port}/{database_name}` | Подключение к MySQL, куда пишутся результаты (таблица `field_lynx`). Без fallback-значения — обязательна. |
+| `PORT` | `.env` | Целое число, по умолчанию `9090` | TCP-порт, который слушает сервер для приёма данных от табло. |
+
+Прочие файлы конфигурации:
+
+| Файл | Назначение |
+|------|------------|
+| `.env` | Локальные секреты и настройки окружения. **Не в git.** |
+| `.env.example` | Шаблон `.env` с описанием переменных (без секретов). В git. |
+| `Dockerfile` | Сборка образа Python 3.10, установка зависимостей, запуск `python3 -m src.server`. |
+| `Makefile` | Команды `build/run/stop/logs`. `run` поднимает контейнер с `--network host` и `--env-file .env`. |
+| `requirements.txt` | Python-зависимости (SQLAlchemy async, asyncmy, loguru). |
+| `.dockerignore` / `.gitignore` | Исключают `.env`, `.venv`, `.idea`, кэши из образа и из git. |
+| `src/config.py` | Читает `PORT` и `DB_URL` из окружения. |
+| `src/init.sql` | Создаёт таблицу `field_lynx`, если её нет (выполняется при старте). |
+| `src/migrations/0000.sql` | Разовая миграция схемы (правка первичного ключа). |
+
 
 ## Установка
 
-На виртуалке с сайтом выполни, поменяв `DB_URL`.
-Формат: `mysql+asyncmy://{db_user}:{db_password}@{db_host}:{db_port}/{database_name}`
+Подставь реальный `DB_URL`.
 
 ```bash
 cd ~
-git clone https://github.com/fertilis/finish-lynx-saver.git
-cd finish-lynx-saver
-cat > .env <<EOT
-DB_URL=mysql+asyncmy://root:password@localhost:3306/dev
-PORT=10000
-EOT
+git clone https://github.com/shark-andrey/field-lynx-saver.git
+cd field-lynx-saver
+cp .env.example .env
+# отредактируй .env: укажи реальные DB_URL и PORT
+nano .env
 make build
 ```
 
 ## Запуск
 
 ```bash
-cd ~/finish-lynx-saver && make run
+cd ~/field-lynx-saver && make run
 ```
 
 
 ## Остановка
 
 ```bash
-cd ~/finish-lynx-saver && make stop
+cd ~/field-lynx-saver && make stop
 ```
 
 ## Логи
 
 ```bash
-cd ~/finish-lynx-saver && make logs
+cd ~/field-lynx-saver && make logs
 ```
+
+
+## Безопасность / секреты
+
+- Секреты хранятся только в `.env`, который в git не коммитится. В репозитории — лишь шаблон `.env.example`.
+- Новому окружению: `cp .env.example .env` и подставить реальные значения.
+- **Важно:** реквизиты БД ранее уже попадали в публичный репозиторий, поэтому этот пароль нужно считать скомпрометированным и **сменить на стороне БД**. Секрет остаётся в старых коммитах истории — чистка HEAD его оттуда не удаляет.
 
 
 ## Testing (это игнорируй, мне для справки)

@@ -3,4 +3,8 @@
 __pycache__/
 *.py[cod]
 /io
+
+# Секреты: игнорируем любые локальные .env, но храним шаблон .env.example
 .env
+.env.*
+!.env.example

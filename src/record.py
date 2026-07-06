@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import sqlalchemy as sa
-import typing
+from decimal import Decimal
+from typing import List, Optional
 
 from sqlalchemy.dialects.mysql import insert
-from decimal import Decimal
-
 from .db import AsyncDbSession
 from .logger import logger
 from . import config
@@ -18,16 +17,17 @@ class Record(typing.NamedTuple):
     place: int
     attempt: int
     athlete_id: int
-    mark: Decimal 
-    wind: str | None
-    photo: str | None = None
+    mark: Decimal
+    wind: Optional[str]= None
+    photo: Optional[str] = None
 
     @classmethod
-    def parse(cls, text: str) -> list[Record]:
+    def parse(cls, text: str) -> List["Record"]:
         str_records = text.split(";")
         str_records = [s.strip() for s in str_records]
         str_records = [s for s in str_records if len(s) > 0]
-        records = []
+
+        records: List["Record"] = []
         for s in str_records:
             try:
                 record = cls._parse_record(s)
@@ -37,22 +37,37 @@ class Record(typing.NamedTuple):
         return records
 
     @classmethod
-    def _parse_record(cls, text: str) -> Record:
-        fields = text.split(",")
-        return cls(
-    event_number: int
-    round_number: int
-    flight_number: int
-    place: int
-    attempt: int
-    athlete_id: int
-    mark: Decimal | None
-    wind: str | None
-    photo: str | None = None
-   )
-        
+    def _parse_record(cls, text: str) -> "Record":
+        fields = [f.strip() for f in text.split(",")]
+        if len(fields) < 8:
+            raise ValueError(f"Not enough fields in record: {text!r}")
 
-async def upsert_records(records: list[Record]):
+        # Парсим поля в нужном порядке и типах
+        event_number = int(fields[0])
+        round_number = int(fields[1])
+        flight_number = int(fields[2])
+        place = int(fields[3])
+        attempt = int(fields[4])
+        athlete_id = int(fields[5])
+        mark_str = fields[6]
+        mark = Decimal(mark_str) if mark_str else Decimal("0")
+        wind = fields[7] if len(fields) > 7 and fields[7] else None
+        photo = fields[8] if len(fields) > 8 and fields[8] else None
+
+        return cls(
+            event_number=event_number,
+            round_number=round_number,
+            flight_number=flight_number,
+            place=place,
+            attempt=attempt,
+            athlete_id=athlete_id,
+            mark=mark,
+            wind=wind,
+            photo=photo,
+        )
+
+
+async def upsert_records(records: List[Record]):
     q = sa.text(UPSERT_QUERY)
     data = [r._asdict() for r in records]
     async with AsyncDbSession() as session:
@@ -61,6 +76,9 @@ async def upsert_records(records: list[Record]):
 
 
 UPSERT_QUERY = f"""
-replace into {config.table_name} (event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo)
-values (:event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo)
+REPLACE INTO {config.table_name} (
+    event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo
+) VALUES (
+    :event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo
+)
 """

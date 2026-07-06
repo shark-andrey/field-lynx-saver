@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import sqlalchemy as sa
 from decimal import Decimal
 from typing import List, NamedTuple, Optional
@@ -67,12 +68,22 @@ class Record(NamedTuple):
         )
 
 
+UPSERT_TIMEOUT = 10
+
+
 async def upsert_records(records: List[Record]):
     q = sa.text(UPSERT_QUERY)
     data = [r._asdict() for r in records]
     async with AsyncDbSession() as session:
-        await session.execute(q, data)
-        await session.commit()
+        try:
+            await asyncio.wait_for(session.execute(q, data), timeout=UPSERT_TIMEOUT)
+            await asyncio.wait_for(session.commit(), timeout=UPSERT_TIMEOUT)
+        except asyncio.TimeoutError:
+            # соединение из пула могло протухнуть (сервер закрыл его по wait_timeout,
+            # а pool_pre_ping не всегда ловит уже закрытый сокет) - без явного invalidate
+            # обычный close/rollback при выходе из "async with" тоже зависнет на этом сокете
+            await session.invalidate()
+            raise
 
 
 UPSERT_QUERY = f"""

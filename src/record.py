@@ -1,12 +1,15 @@
 from __future__ import annotations
+
 import sqlalchemy as sa
 import typing
+
 from sqlalchemy.dialects.mysql import insert
 from decimal import Decimal
 
 from .db import AsyncDbSession
 from .logger import logger
 from . import config
+
 
 class Record(typing.NamedTuple):
     event_number: int
@@ -18,7 +21,7 @@ class Record(typing.NamedTuple):
     mark: Decimal
     wind: str | None
     photo: str | None = None
-    
+
     @classmethod
     def parse(cls, text: str) -> list[Record]:
         str_records = text.split(";")
@@ -35,18 +38,7 @@ class Record(typing.NamedTuple):
 
     @classmethod
     def _parse_record(cls, text: str) -> Record:
-        fields = [f.strip() for f in text.split(",")]
-        if len(fields) < 8:
-            raise ValueError(f"Not enough fields in record: {text!r}")
-
-        def to_decimal_or_none(value: str | None) -> Decimal | None:
-            if not value:
-                return None
-            try:
-                return Decimal(value)
-            except InvalidOperation:
-                raise ValueError(f"Invalid decimal value: {value!r}")
-
+        fields = text.split(",")
         return cls(
             int(fields[0]),
             int(fields[1]),
@@ -58,24 +50,17 @@ class Record(typing.NamedTuple):
             fields[7] or None,
             fields[8] if len(fields) > 8 else None,
         )
-       
+        
 
 async def upsert_records(records: list[Record]):
-    if not records:
-        return
-
     q = sa.text(UPSERT_QUERY)
     data = [r._asdict() for r in records]
-
     async with AsyncDbSession() as session:
-        # begin() гарантирует commit при успехе и rollback при ошибке
-        async with session.begin():
-            conn = await session.connection()
-            # Важно: передаём список словарей напрямую — asyncmy умеет executemany
-            await conn.execute(q, data)
+        await session.execute(q, data)
+        await session.commit()
 
 
 UPSERT_QUERY = f"""
-replace into {config.table_name} (event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo)
-values (:event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo)
+replace into {config.table_name} (event_number, round_number, heat_number, place, athlete_id, lane, time, react_time, wind, photo_file_name)
+values (:event_number, :round_number, :heat_number, :place, :athlete_id, :lane, :time, :react_time, :wind, :photo_file_name)
 """

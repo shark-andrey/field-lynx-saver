@@ -19,3 +19,7 @@ async def init_db():
     async with AsyncDbSession() as session:
         await session.execute(sa.text(query))
         await session.commit()
+
+
+if __name__ == "__main__":
+    asyncio.run(init_db())

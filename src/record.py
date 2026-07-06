@@ -16,8 +16,8 @@ class Record(typing.NamedTuple):
     attempt: int
     athlete_id: int
     mark: Decimal
-    wind: Optional[str]
-    photo: Optional[str] = None
+    wind: str | None
+    photo: str | None = None
 
     @classmethod
     def parse(cls, text: str) -> List["Record"]:

@@ -1,5 +1,4 @@
 import asyncio
-import traceback
 
 from .record import Record, upsert_records
 from .logger import logger
@@ -20,22 +19,38 @@ async def main():
 
 
 async def on_accept(reader, writer):
-    logger.debug("Got connection")
+    # Устройство разделяет записи символом ";" и не гарантирует перевод строки,
+    # поэтому нельзя использовать reader.readline() - он будет копить данные в
+    # буфере до "\n" или до разрыва соединения (это и была причина пакетной
+    # записи только при закрытии сокета). Читаем сырые байты и режем по ";" сами.
+    addr = writer.get_extra_info("peername")
+    logger.debug(f"Got connection from {addr}")
+    buffer = b""
     while True:
-        message = await reader.readline()
-        if message == b"":
+        chunk = await reader.read(4096)
+        if chunk == b"":
             break
+        buffer += chunk
+        *complete, buffer = buffer.split(b";")
+        for raw in complete:
+            await _handle_raw(raw)
+    if buffer.strip():
+        await _handle_raw(buffer)
+    logger.debug(f"Connection closed by {addr}")
+
+
+async def _handle_raw(raw: bytes):
+    try:
+        message = raw.decode().strip()
+    except UnicodeDecodeError:
+        logger.error(f"Error decoding message: {raw!r}")
+        return
+    if len(message) > 0:
+        logger.debug(f"Message: {message}")
         try:
-            message = message.decode().strip()
-        except UnicodeDecodeError:
-            logger.error("Error decoding message: {message}")
-            continue
-        if len(message) > 0:
-            logger.debug(f"Message: {message}")
-            try:
-                await handle_message(message)
-            except Exception as e:
-                logger.exception(e)
+            await handle_message(message)
+        except Exception as e:
+            logger.exception(e)
 
 
 async def handle_message(message: str):

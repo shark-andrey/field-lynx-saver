@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, NamedTuple, Optional
 
 from sqlalchemy.dialects.mysql import insert
 from .db import AsyncDbSession
@@ -10,7 +10,7 @@ from .logger import logger
 from . import config
 
 
-class Record(typing.NamedTuple):
+class Record(NamedTuple):
     event_number: int
     round_number: int
     flight_number: int

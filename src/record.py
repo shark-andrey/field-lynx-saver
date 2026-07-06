@@ -18,7 +18,7 @@ class Record(typing.NamedTuple):
     place: int
     attempt: int
     athlete_id: int
-    mark: Decimal
+    mark: Decimal 
     wind: str | None
     photo: str | None = None
 
@@ -40,16 +40,16 @@ class Record(typing.NamedTuple):
     def _parse_record(cls, text: str) -> Record:
         fields = text.split(",")
         return cls(
-            int(fields[0]),
-            int(fields[1]),
-            int(fields[2]),
-            int(fields[3]),
-            int(fields[4]),
-            int(fields[5]),
-            to_decimal_or_none(fields[6]),
-            fields[7] or None,
-            fields[8] if len(fields) > 8 else None,
-        )
+    event_number: int
+    round_number: int
+    flight_number: int
+    place: int
+    attempt: int
+    athlete_id: int
+    mark: Decimal | None
+    wind: str | None
+    photo: str | None = None
+   )
         
 
 async def upsert_records(records: list[Record]):
@@ -61,6 +61,6 @@ async def upsert_records(records: list[Record]):
 
 
 UPSERT_QUERY = f"""
-replace into {config.table_name} (event_number, round_number, heat_number, place, athlete_id, lane, time, react_time, wind, photo_file_name)
-values (:event_number, :round_number, :heat_number, :place, :athlete_id, :lane, :time, :react_time, :wind, :photo_file_name)
+replace into {config.table_name} (event_number, round_number, flight_number, place, attempt, athlete_id, mark, wind, photo)
+values (:event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo)
 """

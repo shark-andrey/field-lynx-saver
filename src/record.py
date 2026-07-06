@@ -1,7 +1,6 @@
 from __future__ import annotations
 import typing
 import sqlalchemy as sa
-from typing import List, Optional
 
 from sqlalchemy.dialects.mysql import insert
 from .db import AsyncDbSession

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sqlalchemy as sa
-from decimal import Decimal
 from typing import List, Optional
 
 from sqlalchemy.dialects.mysql import insert

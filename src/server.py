@@ -46,4 +46,4 @@ async def handle_message(message: str):
 
 
 if __name__ == "__main__":
-    asyncio.run(main()
+    asyncio.run(main())

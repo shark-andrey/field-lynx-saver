@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import typing
 import sqlalchemy as sa
 from typing import List, Optional
 

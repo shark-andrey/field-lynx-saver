@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sqlalchemy as sa
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import List, NamedTuple, Optional
 
 from sqlalchemy.dialects.mysql import insert
@@ -18,7 +18,7 @@ class Record(NamedTuple):
     place: int
     attempt: int
     athlete_id: int
-    mark: Decimal
+    mark: Decimal | str
     wind: str | None
     photo: str | None = None
 
@@ -51,7 +51,10 @@ class Record(NamedTuple):
         attempt = int(fields[4])
         athlete_id = int(fields[5])
         mark_str = fields[6]
-        mark = Decimal(mark_str) if mark_str else Decimal("0")
+        try:
+            mark = Decimal(mark_str) if mark_str else Decimal("0")
+        except InvalidOperation:
+            mark = mark_str
         wind = fields[7] if len(fields) > 7 and fields[7] else None
         photo = fields[8] if len(fields) > 8 and fields[8] else None
 

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS field_lynx (
     place int,
 	attempt int,
     athlete_id int not null,
-    mark decimal(7, 2),
+    mark varchar(6),
     wind varchar(255),
 	photo varchar(255),
     primary key (event_number, round_number, flight_number, attempt, athlete_id)

@@ -47,7 +47,8 @@ class Record(NamedTuple):
         event_number = int(fields[0])
         round_number = int(fields[1])
         flight_number = int(fields[2])
-        place = int(fields[3])
+        raw_place = fields[3].strip()
+        place = int(raw_place) if raw_place else None
         attempt = int(fields[4])
         athlete_id = int(fields[5])
         mark_str = fields[6]
@@ -96,3 +97,4 @@ REPLACE INTO {config.table_name} (
     :event_number, :round_number, :flight_number, :place, :attempt, :athlete_id, :mark, :wind, :photo
 )
 """
+
